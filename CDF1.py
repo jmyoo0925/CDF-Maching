@@ -620,7 +620,7 @@ def main():
                 for var, buf in graph_buffers.items():
                     st.markdown('<div class="graph-container">', unsafe_allow_html=True)
                     buf.seek(0)
-                    st.image(buf, caption=var, use_column_width=True)
+                    st.image(buf, caption=var, use_container_width=True)
                     st.markdown('</div>', unsafe_allow_html=True)
                 
             else:
