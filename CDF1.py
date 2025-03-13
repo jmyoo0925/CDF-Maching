@@ -34,7 +34,7 @@ plt.rc('axes', labelsize=12)
 plt.rc('axes', titlesize=14)
 plt.rc('legend', fontsize=10)
 
-def run_analysis(uploaded_file):
+def run_analysis(uploaded_file, thresholds_info, pval_settings):
     # 업로드된 엑셀 파일 읽기 (Sheet1, header가 첫 행)
     try:
         data = pd.read_excel(uploaded_file, sheet_name='Sheet1', header=0)
@@ -45,7 +45,7 @@ def run_analysis(uploaded_file):
     # 7~18열(0-index: 6~17) 데이터 추출
     S_data = data.iloc[:, 6:18].values  # shape: (row, 12)
     
-    # 변수명 및 각 변수별 설정 (하단 백분위, 상단 백분위, 0 이하 제거, 변환 옵션)
+    # 변수명 (고정)
     VAR_Name = [
         'BIS자기자본비율',     # col7
         'BIS비율변동성',      # col8
@@ -59,21 +59,6 @@ def run_analysis(uploaded_file):
         '뱅크런취약예금 비중',  # col16
         '자금조달편중도',     # col17
         'NSFR'              # col18
-    ]
-    
-    thresholds_info = [
-        (0.0, 0.9,  False, None),      # 1) BIS자기자본비율
-        (0.0, 0.95, False, None),      # 2) BIS비율변동성
-        (0.0, 0.9,  False, None),      # 3) 연체대출채권비율
-        (0.05, 0.95, False, 'maxS'),    # 4) 총자산순이익률 (예: max(S)-S)
-        (0.0, 0.9,  False, None),      # 5) ROA변동성
-        (0.0, 0.9,  False, None),      # 6) LCR
-        (0.0, 0.9,  False, None),      # 7) 요주의 대비 대손충당금 비율
-        (0.0, 1.0,  False, None),      # 8) 가계대출 분할상환 비중
-        (0.0, 1.0,  True,  None),      # 9) 후순위채권 비중 (0 이하 제거)
-        (0.05, 0.95, False, None),     # 10) 뱅크런취약예금 비중
-        (0.0, 0.95, True,  None),      # 11) 자금조달편중도 (0 이하 제거)
-        (0.0, 0.9,  False, None)       # 12) NSFR
     ]
     
     # 결과 저장용 구조체 초기화
@@ -159,7 +144,7 @@ def run_analysis(uploaded_file):
             mae = np.mean(abs_diff)
             mse = np.mean((cdf_vals - empirical_cdf) ** 2)
             ks_stat, pval = stats.kstest(S_filtered, 'burr12', args=(burr_c, burr_d, 0, burr_scale))
-            h = 1 if pval < 0.05 else 0
+            h = 1 if pval < pval_settings["Burr"] else 0
             candidate_params['Burr'] = param_list
             candidate_errors['Burr'] = [mae, np.max(abs_diff), mse, h]
             candidate_T['Burr'] = (S_filtered, empirical_cdf, cdf_vals)
@@ -175,7 +160,7 @@ def run_analysis(uploaded_file):
             mae = np.mean(abs_diff)
             mse = np.mean((cdf_vals - empirical_cdf) ** 2)
             ks_stat, pval = stats.kstest(S_filtered, 'weibull_min', args=(shape, 0, scale))
-            h = 1 if pval < 0.05 else 0
+            h = 1 if pval < pval_settings["Weibull"] else 0
             candidate_params['Weibull'] = param_list
             candidate_errors['Weibull'] = [mae, np.max(abs_diff), mse, h]
             candidate_T['Weibull'] = (S_filtered, empirical_cdf, cdf_vals)
@@ -191,7 +176,7 @@ def run_analysis(uploaded_file):
             mae = np.mean(abs_diff)
             mse = np.mean((cdf_vals - empirical_cdf) ** 2)
             ks_stat, pval = stats.kstest(S_filtered, 'gamma', args=(a, 0, scale))
-            h = 1 if pval < 0.05 else 0
+            h = 1 if pval < pval_settings["Gamma"] else 0
             candidate_params['Gamma'] = param_list
             candidate_errors['Gamma'] = [mae, np.max(abs_diff), mse, h]
             candidate_T['Gamma'] = (S_filtered, empirical_cdf, cdf_vals)
@@ -208,7 +193,7 @@ def run_analysis(uploaded_file):
             mae = np.mean(abs_diff)
             mse = np.mean((cdf_vals - empirical_cdf) ** 2)
             ks_stat, pval = stats.kstest(S_filtered, 'lognorm', args=(sigma, 0, scale))
-            h = 1 if pval < 0.05 else 0
+            h = 1 if pval < pval_settings["Lognormal"] else 0
             candidate_params['Lognormal'] = param_list
             candidate_errors['Lognormal'] = [mae, np.max(abs_diff), mse, h]
             candidate_T['Lognormal'] = (S_filtered, empirical_cdf, cdf_vals)
@@ -223,7 +208,7 @@ def run_analysis(uploaded_file):
             mae = np.mean(abs_diff)
             mse = np.mean((cdf_vals - empirical_cdf) ** 2)
             ks_stat, pval = stats.kstest(S_filtered, 'norm', args=(mu_norm, std_norm))
-            h = 1 if pval < 0.05 else 0
+            h = 1 if pval < pval_settings["Normal"] else 0
             candidate_params['Normal'] = param_list
             candidate_errors['Normal'] = [mae, np.max(abs_diff), mse, h]
             candidate_T['Normal'] = (S_filtered, empirical_cdf, cdf_vals)
@@ -239,7 +224,7 @@ def run_analysis(uploaded_file):
             mae = np.mean(abs_diff)
             mse = np.mean((cdf_vals - empirical_cdf) ** 2)
             ks_stat, pval = stats.kstest(S_filtered, 'expon', args=(0, scale))
-            h = 1 if pval < 0.05 else 0
+            h = 1 if pval < pval_settings["Exponential"] else 0
             candidate_params['Exponential'] = param_list
             candidate_errors['Exponential'] = [mae, np.max(abs_diff), mse, h]
             candidate_T['Exponential'] = (S_filtered, empirical_cdf, cdf_vals)
@@ -255,7 +240,7 @@ def run_analysis(uploaded_file):
             mae = np.mean(abs_diff)
             mse = np.mean((cdf_vals - empirical_cdf) ** 2)
             ks_stat, pval = stats.kstest(S_filtered, 'genpareto', args=(gp_k, gp_loc, gp_scale))
-            h = 1 if pval < 0.05 else 0
+            h = 1 if pval < pval_settings["GenPareto"] else 0
             candidate_params['GenPareto'] = param_list
             candidate_errors['GenPareto'] = [mae, np.max(abs_diff), mse, h]
             candidate_T['GenPareto'] = (S_filtered, empirical_cdf, cdf_vals)
@@ -271,7 +256,7 @@ def run_analysis(uploaded_file):
             mae = np.mean(abs_diff)
             mse = np.mean((cdf_vals - empirical_cdf) ** 2)
             ks_stat, pval = stats.kstest(S_filtered, 'halfnorm', args=(0, hn_scale))
-            h = 1 if pval < 0.05 else 0
+            h = 1 if pval < pval_settings["HalfNormal"] else 0
             candidate_params['HalfNormal'] = param_list
             candidate_errors['HalfNormal'] = [mae, np.max(abs_diff), mse, h]
             candidate_T['HalfNormal'] = (S_filtered, empirical_cdf, cdf_vals)
@@ -374,7 +359,60 @@ def main():
         layout="centered"
     )
 
-    # CSS 스타일 정의
+    # 사이드바 옵션: Threshold Settings
+    with st.sidebar.expander("Threshold Settings", expanded=False):
+        default_thresholds_info = [
+            (0.0, 0.9,  False, None),
+            (0.0, 0.95, False, None),
+            (0.0, 0.9,  False, None),
+            (0.05, 0.95, False, 'maxS'),
+            (0.0, 0.9,  False, None),
+            (0.0, 0.9,  False, None),
+            (0.0, 0.9,  False, None),
+            (0.0, 1.0,  False, None),
+            (0.0, 1.0,  True,  None),
+            (0.05, 0.95, False, None),
+            (0.0, 0.95, True,  None),
+            (0.0, 0.9,  False, None)
+        ]
+        new_thresholds_info = []
+        var_list = [
+            'BIS자기자본비율', 'BIS비율변동성', '연체대출채권비율', '총자산순이익률',
+            'ROA변동성', 'LCR', '요주의 대비 대손충당금 비율', '가계대출 분할상환 비중',
+            '후순위채권 비중', '뱅크런취약예금 비중', '자금조달편중도', 'NSFR'
+        ]
+        for i, var in enumerate(var_list):
+            st.markdown(f"**{var}**")
+            lower_val = st.number_input(f"{var} - 하단 백분위 (%)", value=default_thresholds_info[i][0]*100, min_value=0.0, max_value=100.0, step=0.5, key=f"lower_{i}")
+            upper_val = st.number_input(f"{var} - 상단 백분위 (%)", value=default_thresholds_info[i][1]*100, min_value=0.0, max_value=100.0, step=0.5, key=f"upper_{i}")
+            remove_option = st.selectbox(f"{var} - 0 이하 제거", options=[False, True], index=1 if default_thresholds_info[i][2] else 0, key=f"remove_{i}")
+            transform_option = st.selectbox(f"{var} - 변환 옵션", options=["None", "maxS", "minS"], 
+                                              index=0 if default_thresholds_info[i][3] is None else (1 if default_thresholds_info[i][3]=="maxS" else 2), key=f"transform_{i}")
+            transform_option_final = None if transform_option == "None" else transform_option
+            new_thresholds_info.append((lower_val/100, upper_val/100, remove_option, transform_option_final))
+    
+    # 사이드바 옵션: P-Value Settings
+    with st.sidebar.expander("P-Value Settings", expanded=False):
+        burr_p = st.number_input("Burr 분포 p-value 임계치 (%)", value=5.0, min_value=0.0, max_value=100.0, step=0.5, key="p_burr")
+        weibull_p = st.number_input("Weibull 분포 p-value 임계치 (%)", value=5.0, min_value=0.0, max_value=100.0, step=0.5, key="p_weibull")
+        gamma_p = st.number_input("Gamma 분포 p-value 임계치 (%)", value=5.0, min_value=0.0, max_value=100.0, step=0.5, key="p_gamma")
+        lognorm_p = st.number_input("Lognormal 분포 p-value 임계치 (%)", value=5.0, min_value=0.0, max_value=100.0, step=0.5, key="p_lognorm")
+        normal_p = st.number_input("Normal 분포 p-value 임계치 (%)", value=5.0, min_value=0.0, max_value=100.0, step=0.5, key="p_normal")
+        exponential_p = st.number_input("Exponential 분포 p-value 임계치 (%)", value=5.0, min_value=0.0, max_value=100.0, step=0.5, key="p_exponential")
+        genpareto_p = st.number_input("GenPareto 분포 p-value 임계치 (%)", value=5.0, min_value=0.0, max_value=100.0, step=0.5, key="p_genpareto")
+        halfnorm_p = st.number_input("HalfNormal 분포 p-value 임계치 (%)", value=5.0, min_value=0.0, max_value=100.0, step=0.5, key="p_halfnorm")
+        pval_settings = {
+            "Burr": burr_p / 100,
+            "Weibull": weibull_p / 100,
+            "Gamma": gamma_p / 100,
+            "Lognormal": lognorm_p / 100,
+            "Normal": normal_p / 100,
+            "Exponential": exponential_p / 100,
+            "GenPareto": genpareto_p / 100,
+            "HalfNormal": halfnorm_p / 100,
+        }
+    
+    # 메인 CSS 스타일 정의
     st.markdown("""
         <style>
         /* 전체 폰트 및 기본 스타일 */
@@ -521,7 +559,7 @@ def main():
     if uploaded_file is not None:
         if st.button("분석 시작", key="run_analysis_btn"):
             with st.spinner("데이터를 분석하고 있습니다..."):
-                result_df, excel_buffer, details, graph_buffers = run_analysis(uploaded_file)
+                result_df, excel_buffer, details, graph_buffers = run_analysis(uploaded_file, new_thresholds_info, pval_settings)
             
             if result_df is not None:
                 # 분석 결과 출력
