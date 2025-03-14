@@ -293,9 +293,9 @@ def run_analysis(uploaded_file, thresholds_info, pval_settings):
         final_results['최소치'].append(min_val)
         final_results['최대치'].append(max_val)
         final_results['분포'].append(best_dist)
-        p1 = round(picked_params[0], 4) if not np.isnan(picked_params[0]) else ''
-        p2 = round(picked_params[1], 4) if not np.isnan(picked_params[1]) else ''
-        p3 = round(picked_params[2], 4) if len(picked_params) > 2 and not np.isnan(picked_params[2]) else ''
+        p1 = float(round(picked_params[0], 4)) if not np.isnan(picked_params[0]) else ''
+        p2 = float(round(picked_params[1], 4)) if not np.isnan(picked_params[1]) else ''
+        p3 = float(round(picked_params[2], 4)) if len(picked_params) > 2 and not np.isnan(picked_params[2]) else ''
         final_results['모수1'].append(p1)
         final_results['모수2'].append(p2)
         final_results['모수3'].append(p3)
