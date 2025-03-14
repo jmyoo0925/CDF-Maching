@@ -146,11 +146,12 @@ def run_analysis(uploaded_file, thresholds_info, pval_settings):
             ks_stat, pval = stats.kstest(S_filtered, 'burr12', args=(burr_c, burr_d, 0, burr_scale))
             h = 1 if pval < pval_settings["Burr"] else 0
             candidate_params['Burr'] = param_list
-            candidate_errors['Burr'] = [mae, np.max(abs_diff), mse, h]
+            candidate_errors['Burr'] = [mae, np.max(abs_diff), mse, pval, h]
             candidate_T['Burr'] = (S_filtered, empirical_cdf, cdf_vals)
         except Exception as e:
             pass
-        # Weibull
+
+        # Weibull 분포 피팅
         try:
             p = stats.weibull_min.fit(S_filtered, floc=0)
             shape, _, scale = p
@@ -162,11 +163,12 @@ def run_analysis(uploaded_file, thresholds_info, pval_settings):
             ks_stat, pval = stats.kstest(S_filtered, 'weibull_min', args=(shape, 0, scale))
             h = 1 if pval < pval_settings["Weibull"] else 0
             candidate_params['Weibull'] = param_list
-            candidate_errors['Weibull'] = [mae, np.max(abs_diff), mse, h]
+            candidate_errors['Weibull'] = [mae, np.max(abs_diff), mse, pval, h]
             candidate_T['Weibull'] = (S_filtered, empirical_cdf, cdf_vals)
         except Exception as e:
             pass
-        # Gamma
+
+        # Gamma 분포 피팅
         try:
             p = stats.gamma.fit(S_filtered, floc=0)
             a, _, scale = p
@@ -178,11 +180,12 @@ def run_analysis(uploaded_file, thresholds_info, pval_settings):
             ks_stat, pval = stats.kstest(S_filtered, 'gamma', args=(a, 0, scale))
             h = 1 if pval < pval_settings["Gamma"] else 0
             candidate_params['Gamma'] = param_list
-            candidate_errors['Gamma'] = [mae, np.max(abs_diff), mse, h]
+            candidate_errors['Gamma'] = [mae, np.max(abs_diff), mse, pval, h]
             candidate_T['Gamma'] = (S_filtered, empirical_cdf, cdf_vals)
         except Exception as e:
             pass
-        # Lognormal
+
+        # Lognormal 분포 피팅
         try:
             p = stats.lognorm.fit(S_filtered, floc=0)
             sigma, _, scale = p
@@ -195,11 +198,12 @@ def run_analysis(uploaded_file, thresholds_info, pval_settings):
             ks_stat, pval = stats.kstest(S_filtered, 'lognorm', args=(sigma, 0, scale))
             h = 1 if pval < pval_settings["Lognormal"] else 0
             candidate_params['Lognormal'] = param_list
-            candidate_errors['Lognormal'] = [mae, np.max(abs_diff), mse, h]
+            candidate_errors['Lognormal'] = [mae, np.max(abs_diff), mse, pval, h]
             candidate_T['Lognormal'] = (S_filtered, empirical_cdf, cdf_vals)
         except Exception as e:
             pass
-        # Normal
+
+        # Normal 분포 피팅
         try:
             mu_norm, std_norm = stats.norm.fit(S_filtered)
             param_list = [mu_norm, std_norm, np.nan]
@@ -210,11 +214,12 @@ def run_analysis(uploaded_file, thresholds_info, pval_settings):
             ks_stat, pval = stats.kstest(S_filtered, 'norm', args=(mu_norm, std_norm))
             h = 1 if pval < pval_settings["Normal"] else 0
             candidate_params['Normal'] = param_list
-            candidate_errors['Normal'] = [mae, np.max(abs_diff), mse, h]
+            candidate_errors['Normal'] = [mae, np.max(abs_diff), mse, pval, h]
             candidate_T['Normal'] = (S_filtered, empirical_cdf, cdf_vals)
         except Exception as e:
             pass
-        # Exponential
+
+        # Exponential 분포 피팅
         try:
             p = stats.expon.fit(S_filtered, floc=0)
             scale = p[1]
@@ -226,11 +231,12 @@ def run_analysis(uploaded_file, thresholds_info, pval_settings):
             ks_stat, pval = stats.kstest(S_filtered, 'expon', args=(0, scale))
             h = 1 if pval < pval_settings["Exponential"] else 0
             candidate_params['Exponential'] = param_list
-            candidate_errors['Exponential'] = [mae, np.max(abs_diff), mse, h]
+            candidate_errors['Exponential'] = [mae, np.max(abs_diff), mse, pval, h]
             candidate_T['Exponential'] = (S_filtered, empirical_cdf, cdf_vals)
         except Exception as e:
             pass
-        # Generalized Pareto
+
+        # Generalized Pareto 분포 피팅
         try:
             p = stats.genpareto.fit(S_filtered)
             gp_k, gp_loc, gp_scale = p
@@ -242,11 +248,12 @@ def run_analysis(uploaded_file, thresholds_info, pval_settings):
             ks_stat, pval = stats.kstest(S_filtered, 'genpareto', args=(gp_k, gp_loc, gp_scale))
             h = 1 if pval < pval_settings["GenPareto"] else 0
             candidate_params['GenPareto'] = param_list
-            candidate_errors['GenPareto'] = [mae, np.max(abs_diff), mse, h]
+            candidate_errors['GenPareto'] = [mae, np.max(abs_diff), mse, pval, h]
             candidate_T['GenPareto'] = (S_filtered, empirical_cdf, cdf_vals)
         except Exception as e:
             pass
-        # Half-Normal
+
+        # Half-Normal 분포 피팅
         try:
             p = stats.halfnorm.fit(S_filtered, floc=0)
             hn_scale = p[1]
@@ -258,11 +265,11 @@ def run_analysis(uploaded_file, thresholds_info, pval_settings):
             ks_stat, pval = stats.kstest(S_filtered, 'halfnorm', args=(0, hn_scale))
             h = 1 if pval < pval_settings["HalfNormal"] else 0
             candidate_params['HalfNormal'] = param_list
-            candidate_errors['HalfNormal'] = [mae, np.max(abs_diff), mse, h]
+            candidate_errors['HalfNormal'] = [mae, np.max(abs_diff), mse, pval, h]
             candidate_T['HalfNormal'] = (S_filtered, empirical_cdf, cdf_vals)
         except Exception as e:
             pass
-    
+
         # 6) 최적의 분포 선택 (평균 절대 오차 기준)
         best_dist = None
         best_mae = np.inf
@@ -271,7 +278,7 @@ def run_analysis(uploaded_file, thresholds_info, pval_settings):
             if mae_val < best_mae:
                 best_mae = mae_val
                 best_dist = dist_name
-    
+
         if best_dist is None:
             st.warning(f"[{var_name}] 피팅 가능한 분포가 없습니다.")
             final_results['최소치'].append(round(np.min(S_sorted), 4))
@@ -281,13 +288,14 @@ def run_analysis(uploaded_file, thresholds_info, pval_settings):
             final_results['모수2'].append('')
             final_results['모수3'].append('')
             continue
-    
+
         picked_params = candidate_params[best_dist]
         picked_errors = candidate_errors[best_dist]
         picked_T = candidate_T[best_dist]
-        # KS검정 결과: h=1이면 부적합, 0이면 적합 (여기서는 단순 정보로 활용)
-        passed = 1 - picked_errors[3]
-    
+        # KS 검정 결과: h=1이면 부적합, 0이면 적합 (여기서는 단순 정보로 활용)
+        passed = 1 - picked_errors[4]
+        ks_p_value = picked_errors[3]  # 계산된 p-value
+
         min_val = round(np.min(S_sorted), 4)
         max_val = round(np.max(S_sorted), 4)
         final_results['최소치'].append(min_val)
@@ -299,14 +307,16 @@ def run_analysis(uploaded_file, thresholds_info, pval_settings):
         final_results['모수1'].append(p1)
         final_results['모수2'].append(p2)
         final_results['모수3'].append(p3)
-    
+
         results_detail.append({
             'Variable': var_name,
             'Best Distribution': best_dist,
             'Parameters': [p1, p2, p3],
             'Abs_Dev': best_mae,
+            'KS_p_value': ks_p_value,
             'Passed(KS)': passed
         })
+
     
         # 7) 그래프 생성 (경험적 CDF와 피팅된 분포 CDF 비교)
         fig = plt.figure(figsize=(10, 6), dpi=150)
@@ -568,8 +578,6 @@ def main():
                 st.dataframe(result_df, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True)
                 
-                # 상세 분석 결과
-                st.markdown('<p class="section-header">📈 상세 분석</p>', unsafe_allow_html=True)
                 with st.expander("상세 분포 피팅 결과", expanded=False):
                     for item in details:
                         st.markdown(f"""
@@ -579,10 +587,12 @@ def main():
                                     <p>🎯 최적 분포: <strong>{item['Best Distribution']}</strong></p>
                                     <p>📊 파라미터: <strong>{item['Parameters']}</strong></p>
                                     <p>📉 절대 오차 (MAE): <strong>{item['Abs_Dev']:.4f}</strong></p>
+                                    <p>KS P-Value: <strong>{item['KS_p_value']:.4f}</strong></p>
                                     <p>✓ KS 검정: <strong>{'합격' if item['Passed(KS)'] == 1 else '불합격'}</strong></p>
                                 </div>
                             </div>
                         """, unsafe_allow_html=True)
+
                 
                 # 다운로드 섹션
                 st.markdown('<div class="download-section">', unsafe_allow_html=True)
