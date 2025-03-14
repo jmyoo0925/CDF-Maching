@@ -316,7 +316,6 @@ def run_analysis(uploaded_file, thresholds_info, pval_settings):
             'KS_p_value': ks_p_value,
             'Passed(KS)': passed
         })
-
     
         # 7) 그래프 생성 (경험적 CDF와 피팅된 분포 CDF 비교)
         fig = plt.figure(figsize=(10, 6), dpi=150)
@@ -578,6 +577,8 @@ def main():
                 st.dataframe(result_df, use_container_width=True)
                 st.markdown('</div>', unsafe_allow_html=True)
                 
+                # 상세 분석 결과
+                st.markdown('<p class="section-header">📈 상세 분석</p>', unsafe_allow_html=True)
                 with st.expander("상세 분포 피팅 결과", expanded=False):
                     for item in details:
                         st.markdown(f"""
