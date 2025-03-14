@@ -546,7 +546,7 @@ def main():
         <div style="text-align: center; padding: 2rem 0;">
             <h1 class="main-title">실험용 분석 성민관 전용ㅋ</h1>
             <p class="sub-title">
-                틀틀틀 딱딱딱딱딱딱딲!!!! 시발놈들ㅜ
+                틀틀틀 딱딱딱딱딱딱딲!!!!시발놈들ㅜ
             </p>
         </div>
     """, unsafe_allow_html=True)
