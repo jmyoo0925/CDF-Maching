@@ -14,19 +14,15 @@ import platform
 
 # 한글 폰트 설정
 if platform.system() == 'Windows':
+    # 윈도우의 경우 폰트 경로 직접 지정
     font_path = r'C:\Windows\Fonts\malgun.ttf'
+    font_name = fm.FontProperties(fname=font_path, size=10).get_name()
+    plt.rcParams['font.family'] = font_name
+    plt.rcParams['font.size'] = 10
+    plt.rcParams['axes.unicode_minus'] = False
 else:
-    # 배포 환경에서는 현재 작업 디렉터리를 사용
-    font_path = os.path.join(os.getcwd(), 'NanumGothic.ttf')
-
-if os.path.exists(font_path):
-    fm.fontManager.addfont(font_path)
-    font_prop = fm.FontProperties(fname=font_path)
-    plt.rcParams['font.family'] = font_prop.get_name()
-else:
-    # 폰트 파일을 찾지 못하면 기본 폰트 사용 (한글 깨짐 현상 발생 가능)
-    plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['axes.unicode_minus'] = False
+    plt.rcParams['font.family'] = 'NanumGothic'
+    plt.rcParams['axes.unicode_minus'] = False
 
 # 그래프 스타일 설정
 plt.style.use('seaborn-v0_8')
