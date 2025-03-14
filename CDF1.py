@@ -15,15 +15,16 @@ import platform
 if platform.system() == 'Windows':
     font_path = r'C:\Windows\Fonts\malgun.ttf'
 else:
-    # 배포 환경에서는 현재 작업 디렉터리를 사용
+    # 현재 작업 디렉토리에서 NanumGothic.ttf 파일 찾기
     font_path = os.path.join(os.getcwd(), 'NanumGothic.ttf')
+    print("Looking for font file at:", font_path)
 
 if os.path.exists(font_path):
     fm.fontManager.addfont(font_path)
     font_prop = fm.FontProperties(fname=font_path)
     plt.rcParams['font.family'] = font_prop.get_name()
 else:
-    # 폰트 파일을 찾지 못하면 기본 폰트 사용 (한글 깨짐 현상 발생 가능)
+    print("Font file not found. Using default font.")
     plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False
 
