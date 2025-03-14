@@ -544,9 +544,9 @@ def main():
     # 메인 헤더
     st.markdown("""
         <div style="text-align: center; padding: 2rem 0;">
-            <h1 class="main-title">실험용 분석 성민관 전용ㅋ</h1>
+            <h1 class="main-title">은행 변수 데이터 분포 분석</h1>
             <p class="sub-title">
-                틀틀틀 딱딱딱딱딱딱딲!!!!시발놈들ㅜ
+                CDF 매칭 및 KS검정 분석
             </p>
         </div>
     """, unsafe_allow_html=True)
