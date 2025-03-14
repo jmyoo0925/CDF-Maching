@@ -12,21 +12,17 @@ import matplotlib.font_manager as fm
 import platform
 
 # 한글 폰트 설정
+import matplotlib as mpl
 if platform.system() == 'Windows':
+    # 윈도우의 경우 폰트 경로 직접 지정
     font_path = r'C:\Windows\Fonts\malgun.ttf'
+    font_name = fm.FontProperties(fname=font_path, size=10).get_name()
+    plt.rcParams['font.family'] = font_name
+    plt.rcParams['font.size'] = 10
+    plt.rcParams['axes.unicode_minus'] = False
 else:
-    # 현재 작업 디렉토리에서 NanumGothic.ttf 파일 찾기
-    font_path = os.path.join(os.getcwd(), 'NanumGothic.ttf')
-    print("Looking for font file at:", font_path)
-
-if os.path.exists(font_path):
-    fm.fontManager.addfont(font_path)
-    font_prop = fm.FontProperties(fname=font_path)
-    plt.rcParams['font.family'] = font_prop.get_name()
-else:
-    print("Font file not found. Using default font.")
-    plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['axes.unicode_minus'] = False
+    plt.rcParams['font.family'] = 'NanumGothic'
+    plt.rcParams['axes.unicode_minus'] = False
 
 # 그래프 스타일 설정
 plt.style.use('seaborn-v0_8')
