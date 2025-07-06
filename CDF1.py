@@ -22,7 +22,7 @@ else:
 plt.rc("axes", unicode_minus=False)
 
 # ────────── Streamlit 페이지 설정 ──────────
-st.set_page_config(page_title="CDF 매칭 분석기", layout="wide")
+st.set_page_config(page_title="CDF 매칭 분석기")
 st.title("📊 은행 변수 데이터 분포 분석")
 
 # ────────── Burr / Half‑Normal 전용 함수 ──────────
