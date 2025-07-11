@@ -186,7 +186,7 @@ if uploaded:
                 ax.scatter(S, emp_cdf, s=25, color="blue", alpha=0.6, label="Empirical CDF")
                 ax.plot(S, v["cdf"], "--", color="green", linewidth=2,
                         label=f"{name} CDF")
-                ax.set_title(f"{name} (KS 통과)")
+                ax.set_title(f"{name} (KS Test Pass)")
                 ax.set_xlabel("Sample Value")
                 ax.set_ylabel("Cumulative Probability")
                 ax.legend()
@@ -198,7 +198,7 @@ if uploaded:
             ax.scatter(S, emp_cdf, s=25, color="blue", alpha=0.6, label="Empirical CDF")
             ax.plot(S, v["cdf"], "--", color="red", linewidth=2,
                     label=f"{best_name} CDF (KS 실패)")
-            ax.set_title(f"{best_name} (KS 미통과)")
+            ax.set_title(f"{best_name} (KS Test Fail)")
             ax.set_xlabel("Sample Value")
             ax.set_ylabel("Cumulative Probability")
             ax.legend()
