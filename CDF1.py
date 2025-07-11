@@ -1,4 +1,3 @@
-# streamlit_cdf_matching.py
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -26,9 +25,6 @@ st.set_page_config(page_title="CDF 매칭 분석기")
 st.title("📊 은행 변수 데이터 분포 분석")
 
 # ────────── Burr / Half‑Normal 전용 함수 ──────────
-def burr_pdf(x, alpha, c, k):
-    return (c * k / alpha) * (x/alpha)**(c-1) * (1 + (x/alpha)**c)**(-k-1)
-
 def burr_cdf(x, alpha, c, k):
     return 1 - (1 + (x/alpha)**c)**(-k)
 
@@ -72,7 +68,6 @@ if uploaded:
     st.subheader("📑 Sheet1 미리보기")
     st.dataframe(df_raw, use_container_width=True)
 
-    # 7~18열 숫자형만
     numeric = df_raw.iloc[:, 6:18].apply(pd.to_numeric, errors="coerce")
     A = numeric.to_numpy(float)
 
@@ -88,22 +83,17 @@ if uploaded:
                                  format_func=lambda x: f"{x}: {VAR_LIST[x-7]}")
         lo = st.number_input("하단 백분위수(%)", 0, 100, 0, step=1)
         hi = st.number_input("상단 백분위수(%)", 0, 100, 100, step=1)
-        ks_alpha = st.number_input("KS 통과 기준값(α, %)", 1, 100, 5, step=1,
-                                   format="%d")/100
+        ks_alpha = st.number_input("KS 통과 기준값(α, %)", 1, 100, 5, step=1, format="%d")/100
     with col2:
         exclude_zero = st.checkbox("0 이하 값 제거", False)
         invert_sample = st.checkbox("샘플 반전", False)
         run_btn = st.button("📈 분석 실행")
 
     if run_btn:
-        # ────────── 샘플 구성 ──────────
         j_adj = indicator - 7
         S_full = numeric.iloc[:, j_adj].dropna().astype(float).values
-        st.info(f"원본 샘플 크기: **{len(S_full)}**")
         if exclude_zero:
             S_full = S_full[S_full > 0]
-            st.info(f"0 이하 제거 후 샘플 크기: **{len(S_full)}**")
-
         S_full = np.sort(S_full)
         p1 = int(np.ceil(len(S_full)*lo/100))
         p2 = int(np.ceil(len(S_full)*hi/100))
@@ -111,16 +101,13 @@ if uploaded:
         if invert_sample:
             S = np.max(S) - S + 0.001
         S = np.sort(S)
-        st.success(f"샘플 구성 완료: **{len(S)}**개 데이터 포인트")
-
         emp_cdf = np.arange(1, len(S)+1)/len(S)
-
-        # ────────── 분포 피팅 ──────────
         results = {}
+
         try:
             a,c,k = fit_burr_mle(S)
             T = burr_cdf(S,a,c,k)
-            results["Burr"] = dict(params=[round(a,4),round(c,4),round(k,4)],
+            results["Burr"] = dict(params=[float(round(a,4)), float(round(c,4)), float(round(k,4))],
                                    mae=np.mean(abs(T-emp_cdf)),
                                    pval=stats.kstest(S, lambda x: burr_cdf(x,a,c,k))[1],
                                    cdf=T)
@@ -129,31 +116,36 @@ if uploaded:
 
         for name, fit_func, cdf_func, param_fmt in [
             ("Weibull", weibull_min.fit, weibull_min.cdf,
-             lambda p: [round(p[0],4), round(p[2],4)]),
+             lambda p: [float(round(p[0],4)), float(round(p[2],4))]),
             ("Gamma", gamma.fit, gamma.cdf,
-             lambda p: [round(p[0],4), round(p[2],4)]),
-            ("LogNormal", lognorm.fit, lognorm.cdf,
-             lambda p: [round(p[0],4), round(p[2],4)]),
+             lambda p: [float(round(p[0],4)), float(round(p[2],4))]),
+            ("LogNormal", lambda data: lognorm.fit(data, floc=0), lognorm.cdf,
+             lambda p: [float(round(p[0],4)), float(round(p[2],4))]),
             ("Normal", norm.fit, norm.cdf,
-             lambda p: [round(p[0],4), round(p[1],4)]),
+             lambda p: [float(round(p[0],4)), float(round(p[1],4))]),
             ("Exponential", expon.fit, expon.cdf,
-             lambda p: [round(p[1],4)]),
+             lambda p: [float(round(p[1],4))]),
             ("Generalized Pareto", genpareto.fit, genpareto.cdf,
-             lambda p: [round(p[0],4), round(p[2],4)])
+             lambda p: [float(round(p[0],4)), float(round(p[2],4))])
         ]:
             try:
-                params = fit_func(S, floc=0) if "floc" in fit_func.__code__.co_varnames else fit_func(S)
+                params = fit_func(S)
+                if name == "LogNormal":
+                    shape, loc, scale = params
+                    if np.isnan(params).any() or shape > 20 or scale > 1e5:
+                        st.warning(f"⚠️ LogNormal 비정상 추정 감지 → shape: {shape:.4f}, scale: {scale:.4f}")
                 T = cdf_func(S, *params)
                 results[name] = dict(params=param_fmt(params),
                                      mae=np.mean(abs(T-emp_cdf)),
                                      pval=stats.kstest(S, cdf_func, args=params)[1],
                                      cdf=T)
-            except: pass
+            except Exception as e:
+                st.warning(f"{name} 피팅 실패: {e}")
 
         try:
             sigma = fit_halfnormal_sigma(S)
             T = halfnormal_cdf_vec(S, sigma)
-            results["Half‑Normal"] = dict(params=[round(sigma,4)],
+            results["Half‑Normal"] = dict(params=[float(round(sigma,4))],
                                           mae=np.mean(abs(T-emp_cdf)),
                                           pval=stats.kstest(S, lambda x: halfnormal_cdf_vec(x,sigma))[1],
                                           cdf=T)
@@ -163,10 +155,8 @@ if uploaded:
             st.error("⚠️ 모든 분포 피팅 실패")
             st.stop()
 
-        # ────────── Best 분포 선정: KS p-value 최대 기준 ──────────
         best_name, best_info = max(results.items(), key=lambda x: x[1]["pval"])
 
-        # ────────── 결과 테이블 표시 ──────────
         table = pd.DataFrame([
             dict(
                 분포=k,
@@ -180,7 +170,6 @@ if uploaded:
         st.subheader("📋 분포별 피팅 결과")
         st.dataframe(table, use_container_width=True)
 
-        # ────────── 최적 분포 요약 ──────────
         st.markdown(
             f"### ⭐ 최적 분포: **{best_name}**\n"
             f"- 파라미터: `{best_info['params']}`\n"
@@ -189,20 +178,51 @@ if uploaded:
             f"({'통과' if best_info['pval'] > ks_alpha else '실패'})"
         )
 
-        # ────────── CDF 그래프 ──────────
         st.subheader("📉 CDF 비교 그래프")
-        fig, ax = plt.subplots(figsize=(8, 5))
-        ax.scatter(S, emp_cdf, s=25, color="blue", alpha=0.7, label="Empirical CDF")
-        colors = plt.cm.tab10(np.linspace(0, 1, len(results)))
-        for (name, v), c in zip(results.items(), colors):
-            lw = 2.5 if name == best_name else 1.2
-            lc = "red" if name == best_name else c
-            ax.plot(S, v["cdf"], "--", color=lc, linewidth=lw,
-                    label=f"{name} CDF" + (" (Best)" if name == best_name else ""))
-        ax.set_xlabel("Sample Value")
-        ax.set_ylabel("Cumulative Probability")
-        ax.legend()
-        ax.grid(alpha=0.3)
-        st.pyplot(fig)
+        passed = {k:v for k,v in results.items() if v["pval"] > ks_alpha}
+        if passed:
+            for name, v in passed.items():
+                fig, ax = plt.subplots(figsize=(7, 4))
+                ax.scatter(S, emp_cdf, s=25, color="blue", alpha=0.6, label="Empirical CDF")
+                ax.plot(S, v["cdf"], "--", color="green", linewidth=2,
+                        label=f"{name} CDF")
+                ax.set_title(f"{name} (KS 통과)")
+                ax.set_xlabel("Sample Value")
+                ax.set_ylabel("Cumulative Probability")
+                ax.legend()
+                ax.grid(alpha=0.3)
+                st.pyplot(fig)
+        else:
+            v = best_info
+            fig, ax = plt.subplots(figsize=(7, 4))
+            ax.scatter(S, emp_cdf, s=25, color="blue", alpha=0.6, label="Empirical CDF")
+            ax.plot(S, v["cdf"], "--", color="red", linewidth=2,
+                    label=f"{best_name} CDF (KS 실패)")
+            ax.set_title(f"{best_name} (KS 미통과)")
+            ax.set_xlabel("Sample Value")
+            ax.set_ylabel("Cumulative Probability")
+            ax.legend()
+            ax.grid(alpha=0.3)
+            st.pyplot(fig)
+
+        st.subheader("📌 구간별 MAE 비교")
+        n = len(S)
+        idx_ranges = [
+            np.arange(0, n),
+            np.arange(0, n//2),
+            np.arange(n//2, n),
+            np.arange(0, int(n*0.3)),
+            np.arange(int(n*0.3), int(n*0.7)),
+            np.arange(int(n*0.7), n)
+        ]
+        range_names = ["전체", "하위 50%", "상위 50%", "하위 30%", "중위 40%", "상위 30%"]
+
+        mae_table = pd.DataFrame([
+            dict(분포=k, **{
+                rn: round(np.mean(np.abs(v["cdf"][r] - emp_cdf[r])), 6)
+                for rn, r in zip(range_names, idx_ranges)
+            }) for k, v in results.items()
+        ])
+        st.dataframe(mae_table, use_container_width=True)
 
         st.success("✅ 분석 완료")
