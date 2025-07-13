@@ -157,18 +157,20 @@ if uploaded:
 
         best_name, best_info = max(results.items(), key=lambda x: x[1]["pval"])
 
-        table = pd.DataFrame([
-            dict(
-                분포=k,
-                MAE=v["mae"],
-                KS_pvalue=round(v["pval"],4),
-                KS_Pass="O" if v["pval"] > ks_alpha else "X",
-                Parameters=v["params"],
-                Best="✅" if k == best_name else ""
-            ) for k, v in results.items()
-        ]).sort_values(["Best", "KS_pvalue"], ascending=[False, False])
+        table = pd.DataFrame([{
+            "분포": k,
+            "MAE": v["mae"],
+            "KS_pvalue": round(v["pval"],4),
+            "KS_Pass": "O" if v["pval"] > ks_alpha else "X",
+            "Parameters": v["params"],
+            "Best": "✅" if k == best_name else ""
+        } for k, v in results.items()]).sort_values(["Best", "KS_pvalue"], ascending=[False, False])
+
+        def highlight_ks_pass(row):
+            return ['font-weight: bold' if row["KS_Pass"] == "O" else '' for _ in row]
+
         st.subheader("📋 분포별 피팅 결과")
-        st.dataframe(table, use_container_width=True)
+        st.dataframe(table.style.apply(highlight_ks_pass, axis=1), use_container_width=True)
 
         st.markdown(
             f"### ⭐ 최적 분포: **{best_name}**\n"
@@ -184,8 +186,7 @@ if uploaded:
             for name, v in passed.items():
                 fig, ax = plt.subplots(figsize=(7, 4))
                 ax.scatter(S, emp_cdf, s=25, color="blue", alpha=0.6, label="Empirical CDF")
-                ax.plot(S, v["cdf"], "--", color="green", linewidth=2,
-                        label=f"{name} CDF")
+                ax.plot(S, v["cdf"], "--", color="green", linewidth=2, label=f"{name} CDF")
                 ax.set_title(f"{name} (KS Test Pass)")
                 ax.set_xlabel("Sample Value")
                 ax.set_ylabel("Cumulative Probability")
@@ -196,8 +197,7 @@ if uploaded:
             v = best_info
             fig, ax = plt.subplots(figsize=(7, 4))
             ax.scatter(S, emp_cdf, s=25, color="blue", alpha=0.6, label="Empirical CDF")
-            ax.plot(S, v["cdf"], "--", color="red", linewidth=2,
-                    label=f"{best_name} CDF (KS 실패)")
+            ax.plot(S, v["cdf"], "--", color="red", linewidth=2, label=f"{best_name} CDF (KS 실패)")
             ax.set_title(f"{best_name} (KS Test Fail)")
             ax.set_xlabel("Sample Value")
             ax.set_ylabel("Cumulative Probability")
@@ -206,6 +206,7 @@ if uploaded:
             st.pyplot(fig)
 
         st.subheader("📌 구간별 MAE 비교")
+
         n = len(S)
         idx_ranges = [
             np.arange(0, n),
@@ -217,12 +218,23 @@ if uploaded:
         ]
         range_names = ["전체", "하위 50%", "상위 50%", "하위 30%", "중위 40%", "상위 30%"]
 
-        mae_table = pd.DataFrame([
-            dict(분포=k, **{
-                rn: round(np.mean(np.abs(v["cdf"][r] - emp_cdf[r])), 6)
-                for rn, r in zip(range_names, idx_ranges)
-            }) for k, v in results.items()
-        ])
-        st.dataframe(mae_table, use_container_width=True)
+        sorted_dist_names = table["분포"].tolist()
+        mae_rows = []
+        for name in sorted_dist_names:
+            v = results[name]
+            row = {
+                "분포": name,
+                "KS_Pass": "O" if v["pval"] > ks_alpha else "X"
+            }
+            for rn, r in zip(range_names, idx_ranges):
+                row[rn] = round(np.mean(np.abs(v["cdf"][r] - emp_cdf[r])), 6)
+            mae_rows.append(row)
+
+        mae_table = pd.DataFrame(mae_rows)
+
+        def highlight_mae_ks_pass(row):
+            return ['font-weight: bold' if row["KS_Pass"] == "O" else '' for _ in row]
+
+        st.dataframe(mae_table.style.apply(highlight_mae_ks_pass, axis=1), use_container_width=True)
 
         st.success("✅ 분석 완료")
