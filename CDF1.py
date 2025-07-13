@@ -218,7 +218,10 @@ if uploaded:
         ]
         range_names = ["전체", "하위 50%", "상위 50%", "하위 30%", "중위 40%", "상위 30%"]
 
+        # 순서에 맞게 정렬된 분포 이름 리스트
         sorted_dist_names = table["분포"].tolist()
+
+        # 각 분포별로 구간별 MAE + KS통과여부
         mae_rows = []
         for name in sorted_dist_names:
             v = results[name]
@@ -231,10 +234,7 @@ if uploaded:
             mae_rows.append(row)
 
         mae_table = pd.DataFrame(mae_rows)
+        st.dataframe(mae_table, use_container_width=True)
 
-        def highlight_mae_ks_pass(row):
-            return ['font-weight: bold' if row["KS_Pass"] == "O" else '' for _ in row]
-
-        st.dataframe(mae_table.style.apply(highlight_mae_ks_pass, axis=1), use_container_width=True)
 
         st.success("✅ 분석 완료")
