@@ -132,8 +132,7 @@ if uploaded:
                 params = fit_func(S)
                 if name == "LogNormal":
                     shape, loc, scale = params
-                    if np.isnan(params).any() or shape > 20 or scale > 1e5:
-                        st.warning(f"⚠️ LogNormal 비정상 추정 감지 → shape: {shape:.4f}, scale: {scale:.4f}")
+
                 T = cdf_func(S, *params)
                 results[name] = dict(params=param_fmt(params),
                                      mae=np.mean(abs(T-emp_cdf)),
