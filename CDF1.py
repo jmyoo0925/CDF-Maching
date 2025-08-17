@@ -38,8 +38,6 @@ def install_korean_font():
     try:
         # Matplotlib의 폰트 매니저에 폰트 추가
         fm.fontManager.addfont(font_path)
-        # Matplotlib의 폰트 캐시를 다시 빌드
-        fm._rebuild()
     except Exception as e:
         st.error(f"폰트 설정에 실패했습니다: {e}")
         return
