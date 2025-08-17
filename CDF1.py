@@ -13,18 +13,11 @@ import platform, warnings
 warnings.filterwarnings("ignore")
 
 # ────────── 한글 폰트 설정 ──────────
-# 시스템에 맞는 폰트 경로를 자동으로 찾거나 기본 폰트를 사용합니다.
-try:
-    if platform.system() == "Windows":
-        font_path = r"C:\Windows\Fonts\malgun.ttf"
-        font_name = fm.FontProperties(fname=font_path).get_name()
-    else:
-        # Colab, Linux 등 환경에서는 나눔고딕이 설치되어 있어야 합니다.
-        font_path = "/usr/share/fonts/truetype/nanum/NanumGothic.ttf"
-        font_name = "NanumGothic"
-    plt.rc("font", family=font_name)
-except FileNotFoundError:
-    st.warning("한글 폰트 파일을 찾을 수 없어 기본 폰트로 설정됩니다. 그래프의 한글이 깨질 수 있습니다.")
+if platform.system() == "Windows":
+    font_path = r"C:\Windows\Fonts\malgun.ttf"
+    plt.rc("font", family=fm.FontProperties(fname=font_path).get_name())
+else:
+    plt.rc("font", family="NanumGothic")
 plt.rc("axes", unicode_minus=False)
 
 
