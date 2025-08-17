@@ -16,38 +16,40 @@ import urllib.request
 warnings.filterwarnings("ignore")
 
 # ────────── 한글 폰트 설정 ──────────
-def set_korean_font():
+@st.cache_resource
+def install_korean_font():
     """
-    Streamlit 클라우드와 같은 원격 환경에서도 한글 폰트를 안정적으로 사용하기 위해,
-    나눔고딕 폰트 파일을 직접 다운로드하여 matplotlib에 설정합니다.
+    깃허브/Streamlit Cloud 환경에서 한글 폰트가 깨지는 문제를 해결하기 위해
+    앱 실행 시 나눔고딕 폰트를 다운로드하고 matplotlib의 폰트 캐시를 재설정합니다.
+    @st.cache_resource 데코레이터 덕분에 이 함수는 세션당 한 번만 실행됩니다.
     """
     font_name = "NanumGothic"
-    font_path = f"{font_name}.ttf"
+    font_path = f"./{font_name}.ttf"
 
-    # 폰트 파일이 로컬에 있는지 확인
     if not os.path.exists(font_path):
-        # 파일이 없으면 웹에서 다운로드
         url = "https://github.com/google/fonts/raw/main/ofl/nanumgothic/NanumGothic-Regular.ttf"
         try:
-            with st.spinner("한글 폰트를 다운로드하고 있습니다..."):
+            with st.spinner("한글 폰트를 설정 중입니다... (최초 1회)"):
                 urllib.request.urlretrieve(url, font_path)
         except Exception as e:
             st.error(f"폰트 다운로드에 실패했습니다: {e}")
-            st.error("기본 폰트로 그래프가 표시되어 한글이 깨질 수 있습니다.")
             return
 
-    # matplotlib의 폰트 매니저에 폰트 추가 및 전역 설정
     try:
-        font_entry = fm.FontEntry(fname=font_path, name=font_name)
-        fm.fontManager.ttflist.append(font_entry)
-        plt.rc('font', family=font_name)
-        plt.rc('axes', unicode_minus=False)
+        # Matplotlib의 폰트 매니저에 폰트 추가
+        fm.fontManager.addfont(font_path)
+        # Matplotlib의 폰트 캐시를 다시 빌드
+        fm._rebuild()
     except Exception as e:
         st.error(f"폰트 설정에 실패했습니다: {e}")
-        st.error("기본 폰트로 그래프가 표시되어 한글이 깨질 수 있습니다.")
+        return
 
-# 앱 시작 시 한글 폰트 설정 함수 호출
-set_korean_font()
+# 폰트 설정 함수 실행
+install_korean_font()
+
+# Matplotlib의 전역 폰트 설정
+plt.rc('font', family='NanumGothic')
+plt.rc('axes', unicode_minus=False)
 
 
 # ────────── Streamlit 페이지 설정 ──────────
@@ -266,7 +268,7 @@ if uploaded:
                     st.info(f"선택하신 지표 '{VAR_LIST[j_adj]}'({indicator}번)는 (1-CDF)로 표시됩니다.")
                     y_label = "Survival Probability (1-CDF)"
                 else:
-                    st.subheader("� 누적 분포 함수(CDF) 비교 그래프")
+                    st.subheader("📉 누적 분포 함수(CDF) 비교 그래프")
                     y_label = "Cumulative Probability (CDF)"
                 
                 passed = {k:v for k,v in results.items() if v["pval"] > ks_alpha}
